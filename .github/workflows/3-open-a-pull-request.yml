@@ -146,12 +146,32 @@ jobs:
           issue-number: ${{ env.ISSUE_NUMBER }}
           file: ${{ env.STEP_4_FILE }}
 
-      - name: Create comment - watching for progress
+      - name: Create comment - watching for progress (attempt 1)
         uses: GrantBirki/comment@v2.1.1
+        id: watching-for-progress-attempt-1
+        continue-on-error: true
         with:
           repository: ${{ env.ISSUE_REPOSITORY }}
           issue-number: ${{ env.ISSUE_NUMBER }}
           file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Wait before retry
+        if: steps.watching-for-progress-attempt-1.outcome == 'failure'
+        run: sleep 5
+
+      - name: Create comment - watching for progress (attempt 2)
+        if: steps.watching-for-progress-attempt-1.outcome == 'failure'
+        uses: GrantBirki/comment@v2.1.1
+        id: watching-for-progress-attempt-2
+        continue-on-error: true
+        with:
+          repository: ${{ env.ISSUE_REPOSITORY }}
+          issue-number: ${{ env.ISSUE_NUMBER }}
+          file: exercise-toolkit/markdown-templates/step-feedback/watching-for-progress.md
+
+      - name: Fail if watching for progress comment could not be posted
+        if: steps.watching-for-progress-attempt-1.outcome == 'failure' && steps.watching-for-progress-attempt-2.outcome == 'failure'
+        run: exit 1
 
       - name: Disable current workflow and enable next one
         run: |
